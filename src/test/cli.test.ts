@@ -1,15 +1,16 @@
-import { describe, test, before } from 'node:test'
+import { describe, test } from 'node:test'
 import assert from 'node:assert/strict'
-import { execFileSync, execFile } from 'node:child_process'
+import { execFileSync } from 'node:child_process'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const CLI = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../cli.js')
-const FIXTURES = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../fixtures')
+const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '../..')
+const CLI = path.join(ROOT, 'src/cli.ts')
+const FIXTURES = path.join(ROOT, 'fixtures')
 
 function run(args: string[]): { stdout: string; stderr: string; exitCode: number } {
   try {
-    const stdout = execFileSync('node', [CLI, ...args], {
+    const stdout = execFileSync(process.execPath, ['--import', 'tsx', CLI, ...args], {
       encoding: 'utf-8',
       env: { ...process.env, NO_COLOR: '1' },
     })
@@ -30,6 +31,7 @@ describe('CLI --help', () => {
     assert.ok(result.stdout.includes('USAGE') || result.stdout.includes('usage'))
     assert.ok(result.stdout.includes('--format'))
     assert.ok(result.stdout.includes('--ignore-keys'))
+    assert.ok(result.stdout.includes('--severity-level'))
     assert.ok(result.stdout.includes('--json-patch'))
   })
 })
@@ -77,6 +79,16 @@ describe('CLI exit codes', () => {
   test('exit 2 when no arguments', () => {
     const result = run([])
     assert.equal(result.exitCode, 2)
+  })
+
+  test('exit 2 when output format is invalid', () => {
+    const result = run([
+      '--format', 'xml',
+      path.join(FIXTURES, 'env-base.env'),
+      path.join(FIXTURES, 'env-missing.dev.env'),
+    ])
+    assert.equal(result.exitCode, 2)
+    assert.ok(result.stderr.includes('Invalid output format'))
   })
 })
 
@@ -127,6 +139,20 @@ describe('CLI --ignore-keys', () => {
     // Should have far fewer diffs
     const total = parsed[0].differences?.length ?? 0
     assert.ok(total < 6, `Expected fewer diffs with ignores, got ${total}`)
+  })
+})
+
+describe('CLI --severity-level', () => {
+  test('filters lower-severity differences from JSON output', () => {
+    const result = run([
+      '--format', 'json',
+      '--severity-level', 'critical',
+      path.join(FIXTURES, 'env-base.env'),
+      path.join(FIXTURES, 'env-missing.dev.env'),
+    ])
+    assert.equal(result.exitCode, 0)
+    const parsed = JSON.parse(result.stdout)
+    assert.equal(parsed[0].differences.length, 0)
   })
 })
 
@@ -183,5 +209,17 @@ describe('CLI cross-format comparison', () => {
     assert.equal(result.exitCode, 1)
     const parsed = JSON.parse(result.stdout)
     assert.ok(parsed[0].differences.length > 0)
+  })
+
+  test('compares TOML vs TOML', () => {
+    const result = run([
+      '--format', 'json',
+      path.join(FIXTURES, 'config-dev.toml'),
+      path.join(FIXTURES, 'config-prod.toml'),
+    ])
+    assert.equal(result.exitCode, 1)
+    const parsed = JSON.parse(result.stdout)
+    assert.ok(parsed[0].differences.length > 0)
+    assert.ok(parsed[0].differences.some((d: any) => d.key === 'database.host'))
   })
 })

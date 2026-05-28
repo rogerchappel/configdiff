@@ -1,4 +1,5 @@
-import type { ConfigEntry } from './parser.js'
+import { parseConfig } from '../parser.js'
+import type { ConfigEntry } from '../types.js'
 import { execSync, spawnSync } from 'node:child_process'
 import * as path from 'node:path'
 import { fileURLToPath } from 'node:url'

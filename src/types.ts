@@ -32,5 +32,5 @@ export interface CompareResult {
 }
 
 export interface ParseOptions {
-  format?: 'env' | 'json' | 'yaml' | 'ini'
+  format?: 'env' | 'json' | 'yaml' | 'ini' | 'toml'
 }

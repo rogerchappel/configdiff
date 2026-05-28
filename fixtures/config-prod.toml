@@ -1,0 +1,22 @@
+appName = "MyApp"
+port = 8080
+
+[database]
+host = "prod-db.internal"
+port = 5432
+name = "myapp_prod"
+poolSize = 20
+ssl = true
+
+[logging]
+level = "warn"
+format = "json"
+
+[cache]
+enabled = true
+ttl = 300
+redisUrl = "redis://cache.prod:6379"
+
+[monitoring]
+enabled = true
+endpoint = "https://monitor.prod.example.com"

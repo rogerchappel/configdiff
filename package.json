@@ -1,7 +1,7 @@
 {
   "name": "configdiff",
   "version": "0.1.0",
-  "description": "Find config drift across environments — compare .env, JSON, YAML, and INI files for missing keys, conflicting values, and severity-ranked diffs",
+  "description": "Find config drift across environments - compare .env, JSON, YAML, TOML, and INI files for missing keys, conflicting values, and severity-ranked diffs",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -19,8 +19,8 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "test": "node --test dist/test/*.test.js",
-    "smoke": "node dist/cli.js fixtures/env-matching.dev.env fixtures/env-matching.prod.env && echo 'smoke OK'",
+    "test": "tsx --test src/test/*.test.ts",
+    "smoke": "npm run build && node dist/cli.js fixtures/env-matching.dev.env fixtures/env-matching.prod-copy.env && (node dist/cli.js --format json fixtures/config-dev.toml fixtures/config-prod.toml >/tmp/configdiff-smoke.json || test $? -eq 1) && echo 'smoke OK'",
     "lint": "tsc --noEmit",
     "check": "npm run lint && npm test"
   },
@@ -31,6 +31,7 @@
     "yaml",
     "json",
     "ini",
+    "toml",
     "drift",
     "environments",
     "devops",
@@ -54,9 +55,11 @@
   "devDependencies": {
     "@types/node": "^25.9.1",
     "tsup": "^8.3.5",
+    "tsx": "^4.22.3",
     "typescript": "^5.7.2"
   },
   "dependencies": {
+    "smol-toml": "^1.6.1",
     "yaml": "^2.6.1"
   }
 }

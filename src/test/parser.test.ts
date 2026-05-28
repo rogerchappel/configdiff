@@ -1,7 +1,7 @@
 import { describe, test } from 'node:test'
 import assert from 'node:assert/strict'
-import { parseConfig, parseConfigContent, detectFormat } from '../../parser.js'
-import * as nodePath from 'node:path'
+import { parseConfig, parseConfigContent, detectFormat } from '../parser.js'
+import * as path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const FIXTURES = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../fixtures')
@@ -27,13 +27,17 @@ describe('detectFormat', () => {
     assert.equal(detectFormat('config.conf'), 'ini')
   })
 
+  test('detects .toml extension', () => {
+    assert.equal(detectFormat('config.toml'), 'toml')
+  })
+
   test('heuristic: falls back to env for unknown extensions with env in name', () => {
     assert.equal(detectFormat('.env.production'), 'env')
     assert.equal(detectFormat('env.local'), 'env')
   })
 
   test('defaults to env for unknown extension', () => {
-    assert.equal(detectFormat('config.toml'), 'env')
+    assert.equal(detectFormat('config.settings'), 'env')
   })
 })
 
@@ -175,5 +179,31 @@ describe('parseConfig (INI)', () => {
     const entries = parseConfig(path.join(FIXTURES, 'config-dev.ini'))
     assert.ok(entries.length > 0)
     assert.ok(entries.find(e => e.key === 'database.host'))
+  })
+})
+
+describe('parseConfig (TOML)', () => {
+  test('parses flat TOML', () => {
+    const entries = parseConfigContent('name = "app"\nport = 3000', 'toml')
+    assert.equal(entries.length, 2)
+    assert.ok(entries.find(e => e.key === 'name' && e.value === 'app'))
+    assert.ok(entries.find(e => e.key === 'port' && e.value === '3000'))
+  })
+
+  test('flattens nested TOML tables', () => {
+    const content = '[database]\nhost = "localhost"\nport = 5432'
+    const entries = parseConfigContent(content, 'toml')
+    assert.ok(entries.find(e => e.key === 'database.host' && e.value === 'localhost'))
+    assert.ok(entries.find(e => e.key === 'database.port' && e.value === '5432'))
+  })
+
+  test('parses fixture file', () => {
+    const entries = parseConfig(path.join(FIXTURES, 'config-dev.toml'))
+    assert.ok(entries.length > 0)
+    assert.ok(entries.find(e => e.key === 'database.host'))
+  })
+
+  test('throws on invalid TOML', () => {
+    assert.throws(() => parseConfigContent('[broken', 'toml'), /Invalid TOML/)
   })
 })

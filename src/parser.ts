@@ -5,12 +5,13 @@ import { parseEnv } from './formats/env.js'
 import { parseJson } from './formats/json.js'
 import { parseYaml } from './formats/yaml.js'
 import { parseIni } from './formats/ini.js'
+import { parseToml } from './formats/toml.js'
 
 /**
  * Detect the config format from a file extension.
  * Falls back to 'env' for unknown extensions.
  */
-export function detectFormat(filePath: string): 'env' | 'json' | 'yaml' | 'ini' {
+export function detectFormat(filePath: string): 'env' | 'json' | 'yaml' | 'ini' | 'toml' {
   const ext = path.extname(filePath).toLowerCase()
   switch (ext) {
     case '.json':
@@ -22,6 +23,8 @@ export function detectFormat(filePath: string): 'env' | 'json' | 'yaml' | 'ini' 
     case '.cfg':
     case '.conf':
       return 'ini'
+    case '.toml':
+      return 'toml'
     case '.env':
       return 'env'
     default:
@@ -50,15 +53,17 @@ export function parseConfig(filePath: string, options?: ParseOptions): ConfigEnt
       return parseYaml(content)
     case 'ini':
       return parseIni(content)
+    case 'toml':
+      return parseToml(content)
     default:
-      throw new Error(`Unsupported format: ${format}. Supported: .env, .json, .yaml, .yml, .ini, .cfg`)
+      throw new Error(`Unsupported format: ${format}. Supported: .env, .json, .yaml, .yml, .ini, .cfg, .toml`)
   }
 }
 
 /**
  * Parse config content from a string (useful for tests and piping).
  */
-export function parseConfigContent(content: string, format: 'env' | 'json' | 'yaml' | 'ini'): ConfigEntry[] {
+export function parseConfigContent(content: string, format: 'env' | 'json' | 'yaml' | 'ini' | 'toml'): ConfigEntry[] {
   switch (format) {
     case 'env':
       return parseEnv(content)
@@ -68,5 +73,7 @@ export function parseConfigContent(content: string, format: 'env' | 'json' | 'ya
       return parseYaml(content)
     case 'ini':
       return parseIni(content)
+    case 'toml':
+      return parseToml(content)
   }
 }

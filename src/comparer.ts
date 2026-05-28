@@ -38,7 +38,8 @@ function assignSeverity(type: DiffEntry['type'], envName: string): Severity {
 export function detectEnvName(filePath: string): string | undefined {
   const basename = filePath.split('/').pop() || filePath
   for (const pattern of [...PROD_PATTERNS, ...STAGING_PATTERNS, ...DEV_PATTERNS]) {
-    if (basename.includes(pattern)) {
+    const escaped = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    if (new RegExp(`(^|[._-])${escaped}($|[._-])`, 'i').test(basename)) {
       return pattern
     }
   }

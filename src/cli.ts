@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 import { parseConfig } from './parser.js'
-import { compareTwo, compareBase } from './comparer.js'
+import { compareBase } from './comparer.js'
 import { formatText, formatJson, formatMarkdown, formatJsonPatch } from './reporter.js'
-import type { ReportFormat } from './types.js'
-import { readFileSync, existsSync } from 'node:fs'
+import type { ReportFormat, Severity, CompareResult } from './types.js'
+import { existsSync } from 'node:fs'
 
 const VERSION = '0.1.0'
 
@@ -16,14 +16,15 @@ USAGE:
   configdiff <file1> <file2>              Compare two config files
   configdiff --base <file> --compare <f1,f2,...>  Compare multiple against a base
 
-FORMATS (auto-detected from extension):
-  .env, .json, .yaml/.yml, .ini/.cfg/.conf
+INPUT FORMATS (auto-detected from extension):
+  .env, .json, .yaml/.yml, .toml, .ini/.cfg/.conf
 
 FLAGS:
   --format <text|json|markdown>   Output format (default: text)
   --ignore-keys <k1,k2,...>       Keys to skip in comparison
   --base <file>                   Base file for multi-compare
   --compare <f1,f2,...>           Comma-separated compare targets
+  --severity-level <level>        Show info, warning, or critical and above
   --json-patch                    Output JSON patch (RFC6902-style) operations
   --no-color                      Disable colored output
   --version, -v                   Show version
@@ -54,6 +55,7 @@ SUPPORTED FORMATS:
   .env    KEY=VALUE lines, export prefix, quoted values, # comments
   .json   Standard JSON objects (nested, flattened with dot paths)
   .yaml   YAML mappings (uses yaml package, nested flattening)
+  .toml   TOML tables (uses smol-toml, nested flattening)
   .ini    INI sections with key=value pairs (prefixed as section.key)
 
 MORE INFO:
@@ -66,6 +68,7 @@ interface CliOptions {
   ignoreKeys: string[]
   baseFile?: string
   compareFiles?: string[]
+  severityLevel?: Severity
   jsonPatch: boolean
   noColor: boolean
   positional: string[]
@@ -87,6 +90,11 @@ function parseArgs(args: string[]): CliOptions {
       case '--format':
         i++
         opts.format = (args[i] || 'text') as ReportFormat
+        if (!['text', 'json', 'markdown'].includes(opts.format)) {
+          console.error(`Error: Invalid output format: ${opts.format}`)
+          console.error('Expected one of: text, json, markdown')
+          process.exit(2)
+        }
         break
       case '--ignore-keys':
         i++
@@ -99,6 +107,15 @@ function parseArgs(args: string[]): CliOptions {
       case '--compare':
         i++
         opts.compareFiles = (args[i] || '').split(',').filter(Boolean)
+        break
+      case '--severity-level':
+        i++
+        opts.severityLevel = (args[i] || 'info') as Severity
+        if (!['info', 'warning', 'critical'].includes(opts.severityLevel)) {
+          console.error(`Error: Invalid severity level: ${opts.severityLevel}`)
+          console.error('Expected one of: info, warning, critical')
+          process.exit(2)
+        }
         break
       case '--json-patch':
         opts.jsonPatch = true
@@ -185,7 +202,7 @@ function main() {
   }
 
   // Compare
-  const results = compareBase(
+  let results = compareBase(
     bf,
     baseEntries,
     cfs,
@@ -194,6 +211,10 @@ function main() {
       ignoreKeys: opts.ignoreKeys.length ? opts.ignoreKeys : undefined,
     }
   )
+
+  if (opts.severityLevel) {
+    results = filterBySeverity(results, opts.severityLevel)
+  }
 
   // JSON patch mode
   if (opts.jsonPatch) {
@@ -223,6 +244,20 @@ function main() {
   // Exit code
   const hasDrift = results.some(r => r.entries.length > 0)
   process.exit(hasDrift ? 1 : 0)
+}
+
+const SEVERITY_RANK: Record<Severity, number> = {
+  info: 0,
+  warning: 1,
+  critical: 2,
+}
+
+function filterBySeverity(results: CompareResult[], minimum: Severity): CompareResult[] {
+  const rank = SEVERITY_RANK[minimum]
+  return results.map(result => ({
+    ...result,
+    entries: result.entries.filter(entry => SEVERITY_RANK[entry.severity] >= rank),
+  }))
 }
 
 main()

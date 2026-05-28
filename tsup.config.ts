@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsup'
 
 export default defineConfig({
-  entry: ['src/cli.ts', 'src/index.ts', 'src/test/*.test.ts', 'src/formats/*.ts', 'src/utils/*.ts'],
+  entry: ['src/cli.ts', 'src/index.ts'],
   format: ['esm'],
   platform: 'node',
   target: 'node18',
@@ -9,6 +9,5 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   splitting: false,
-  bundle: false,
   outDir: 'dist',
 })
