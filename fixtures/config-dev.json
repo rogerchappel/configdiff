@@ -1,0 +1,18 @@
+{
+  "appName": "MyApp",
+  "port": 3000,
+  "database": {
+    "host": "localhost",
+    "port": 5432,
+    "name": "myapp_dev",
+    "poolSize": 5
+  },
+  "logging": {
+    "level": "debug",
+    "format": "pretty"
+  },
+  "cache": {
+    "enabled": true,
+    "ttl": 60
+  }
+}

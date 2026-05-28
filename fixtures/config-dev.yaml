@@ -1,0 +1,12 @@
+appName: MyApp
+port: 3000
+database:
+  host: localhost
+  port: 5432
+  name: myapp_dev
+logging:
+  level: debug
+  format: pretty
+features:
+  darkMode: true
+  betaFeatures: false
