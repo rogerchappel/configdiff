@@ -22,7 +22,9 @@
     "test": "node --test dist/test/*.test.js",
     "smoke": "node dist/cli.js fixtures/env-matching.dev.env fixtures/env-matching.prod.env && echo 'smoke OK'",
     "lint": "tsc --noEmit",
-    "check": "npm run lint && npm test"
+    "check": "npm run lint && npm test",
+    "package:smoke": "npm run build && npm pack --dry-run",
+    "release:check": "npm run lint && npm test && npm run smoke && npm run build && npm pack --dry-run"
   },
   "keywords": [
     "config",
