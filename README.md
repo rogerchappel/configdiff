@@ -1,159 +1,88 @@
-# agentic-oss-template
+# configdiff
 
-`agentic-oss-template` is a GitHub repository template for starting an
-open-source project with clear maintainer policy, agent-friendly workflow rules,
-baseline GitHub automation, and practical release and security documentation.
+Find configuration drift across environments. `configdiff` compares `.env`, JSON, YAML, and INI-style files, then reports missing keys, changed values, and severity-ranked differences for release and operations review.
 
-It is not an application framework or runtime starter. Use it when the first
-thing a new repository needs is trustworthy project structure: reviewable
-contribution flow, documented agent expectations, lightweight CI, issue and pull
-request templates, dependency update policy, and release discipline.
+## Install
 
-## Who this is for
+```sh
+npm install
+npm run build
+```
 
-This template is intended for maintainers who want a new repository to begin
-with working collaboration norms instead of adding them later.
+Run without installing globally:
 
-It is a good fit for:
+```sh
+npx configdiff .env.dev .env.prod
+```
 
-- open-source libraries, tools, CLIs, and documentation projects
-- agent-assisted projects where humans and coding agents will both contribute
-- early-stage repositories that need policy, review, and release scaffolding
-- maintainers who want small, auditable commits and clear review handoffs
+## CLI Usage
 
-It is not a complete product scaffold. It does not include application source
-code, a configured package manager at the root, deployment credentials, or a
-project-specific security contact. Generated repositories should customize the
-template before publishing.
+Compare two files:
 
-## What's included
+```sh
+configdiff fixtures/env-base.env fixtures/env-missing.prod.env
+```
 
-### Repository policy
+Compare multiple environments against a base file:
 
-- `AGENTS.md`: operating instructions for AI agents and human maintainers.
-- `CONTRIBUTING.md`: contribution expectations for generated repositories.
-- `CODE_OF_CONDUCT.md`: baseline community conduct policy.
-- `SECURITY.md`: generic vulnerability reporting policy to customize.
-- `LICENSE`: MIT license text for the template.
-- `CHANGELOG.md`: changelog structure for release notes.
-- `ROADMAP.md`: lightweight roadmap structure.
-- `.editorconfig`: shared editor formatting defaults.
-- `.gitignore`: common ignores for editors, operating systems, dependencies,
-  build output, and local environment files.
+```sh
+configdiff --base fixtures/env-base.env --compare fixtures/env-missing.dev.env,fixtures/env-missing.prod.env
+```
 
-### GitHub project files
+Choose an output format:
 
-- `.github/pull_request_template.md`: pull request review checklist and handoff
-  structure.
-- `.github/ISSUE_TEMPLATE/agent_task.md`: issue template for agent-executable
-  tasks.
-- `.github/ISSUE_TEMPLATE/bug_report.md`: bug report template.
-- `.github/ISSUE_TEMPLATE/feature_request.md`: feature request template.
-- `.github/dependabot.yml`: weekly GitHub Actions dependency updates.
-- `.github/workflows/ci.yml`: baseline repository checks for this template.
-- `.github/workflows/docs.yml`: documentation presence checks.
-- `.github/workflows/branchbrief.yml`: pull request branch summary artifact.
-- `scripts/validate-template.sh`: local repository hygiene validation for this
-  template.
+```sh
+configdiff fixtures/config-dev.yaml fixtures/config-prod.yaml --format markdown
+configdiff fixtures/config-dev.json fixtures/config-prod.json --format json
+```
 
-### Documentation
+Ignore keys that are expected to differ:
 
-- [Repository customisation](docs/repo-customisation.md): first-pass setup after
-  generating a new repository.
-- [Agent workflow](docs/agent-workflow.md): branch, verification, commit, and
-  review pack expectations.
-- [Agent prompts](docs/agent-prompts.md): reusable prompts for common
-  agent-assisted OSS maintenance tasks.
-- [GitHub Actions](docs/github-actions.md): included workflows and how to extend
-  them.
-- [Dependency policy](docs/dependency-policy.md): baseline Dependabot policy and
-  later npm update guidance.
-- [Release process](docs/release-process.md): lightweight versioning, changelog,
-  release notes, publishing, and rollback guidance.
-- [Security policy customisation](docs/security-policy.md): how to adapt
-  vulnerability reporting for the generated repository.
+```sh
+configdiff .env.dev .env.prod --ignore-keys DB_HOST,API_KEY
+```
 
-Additional docs cover branchbrief, Cloudflare Pages, npm publishing, Copilot,
-LLM usage policy, release checklists, template variables, and the project PRD.
+Generate JSON Patch-style operations for automation:
 
-### Examples
+```sh
+configdiff .env .env.prod --json-patch
+```
 
-The `examples/` directory contains small documentation-first examples of how
-generated repositories can look after customization:
+## Supported Formats
 
-- [Minimal library repository](examples/minimal-library/README.md)
-- [CLI and tooling repository](examples/cli-tooling/README.md)
-- [Docs-only repository](examples/docs-only/README.md)
+- `.env`: `KEY=VALUE` lines, `export` prefixes, quoted values, and comments.
+- `.json`: standard JSON objects with nested keys flattened to dot paths.
+- `.yaml` and `.yml`: YAML mappings with nested keys flattened to dot paths.
+- `.ini`, `.cfg`, and `.conf`: INI sections with keys prefixed by section name.
 
-### Reusable templates
+## Library API
 
-The `templates/` directory contains copyable or reference files for generated
-repositories, including:
+```js
+import { parseConfig, compareBase, formatMarkdown } from "configdiff";
 
-- agent instruction templates
-- contributor and review pack templates
-- GitHub issue, pull request, workflow, and Dependabot templates
-- release, changelog, roadmap, and release-checklist templates
-- generated repository README template
-- security policy templates
-- MIT license template
-- optional Cloudflare Pages documentation deployment files
-- optional npm package starter files
-- optional Astro/Starlight docs-site starter files
+const base = parseConfig("fixtures/env-base.env");
+const prod = parseConfig("fixtures/env-missing.prod.env");
+const results = compareBase("base", base, ["prod"], [prod]);
 
-## Use this template
+console.log(formatMarkdown(results));
+```
 
-1. Open this repository on GitHub.
-2. Select **Use this template**.
-3. Create a new repository from the template.
-4. Clone the generated repository locally.
-5. Create a branch for the first customisation pass.
-6. Replace the template identity with the generated repository's name, description,
-   owner, license choice, maintainer guidance, and security reporting path.
-7. Remove files and template assets that the generated repository will not use.
-8. Run the checks listed in the first-30-minute checklist below.
-9. Commit the identity and policy changes before adding application, package, or
-   product code.
+## Exit Codes
 
-## First 30 minutes after generation
+- `0`: no drift found.
+- `1`: drift detected and printed.
+- `2`: invalid input, missing file, parse error, or bad arguments.
 
-Use this checklist before inviting contributors or agents into the generated
-repository:
+## Verify
 
-- Update `README.md` so it describes the generated repository, not this template.
-- Review `LICENSE` and set the correct license text and copyright owner.
-- Review `AGENTS.md` and keep only instructions that match the generated repository.
-- Review `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, and `SECURITY.md` for accuracy.
-- Confirm the security reporting path exists and is monitored.
-- Review `.github/pull_request_template.md` and `.github/ISSUE_TEMPLATE/*.md`.
-- Remove unused files from `templates/`.
-- Search for unresolved template markers and resolve every marker that should
-  not ship in the generated repository.
-- Search for stale template language and remove anything that no longer applies
-  to the generated repository.
-- Run `bash scripts/validate-template.sh` while maintaining this template.
-- Run the smallest relevant local verification for the generated repository.
-- Make the first commit as a small identity-only change.
-
-For the full setup sequence, see
-[Repository customisation](docs/repo-customisation.md).
-
-## Operating model
-
-The repository is designed around small, reviewable, reversible changes:
-
-- branch before editing
-- keep one commit to one reviewable intent
-- run the smallest meaningful verification
-- stage only related files
-- use Conventional Commits
-- return a review pack with summary, verification, risk, and rollback notes
-
-These expectations are documented in
-[Agent workflow](docs/agent-workflow.md) and mirrored in `AGENTS.md`.
+```sh
+npm run build
+npm run check
+npm run smoke
+npm run package:smoke
+npm run release:check
+```
 
 ## License
 
-This template is released under the MIT License. Repositories generated from it
-should choose and document the license that fits their own repository before
-publishing.
+MIT
