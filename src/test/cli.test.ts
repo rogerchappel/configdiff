@@ -4,7 +4,7 @@ import { execFileSync, execFile } from 'node:child_process'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const CLI = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../cli.js')
+const CLI = path.join(path.dirname(fileURLToPath(import.meta.url)), '../cli.js')
 const FIXTURES = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../fixtures')
 
 function run(args: string[]): { stdout: string; stderr: string; exitCode: number } {
