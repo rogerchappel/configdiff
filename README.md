@@ -1,59 +1,100 @@
 # configdiff
 
-Find config drift across environments — compare `.env`, JSON, YAML, and INI files for missing keys, conflicting values, and severity-ranked diffs.
+Find configuration drift across environments. `configdiff` compares `.env`, JSON, YAML, and INI-style files, then reports missing keys, changed values, and severity-ranked differences for release and operations review.
 
-`configdiff` is a local-first CLI tool. It reads your config files, compares them environment by environment, and reports what's missing, what conflicts, and how severe each drift looks.
+## Install
 
-## Quickstart
-
-```bash
+```sh
 npm install
 npm run build
-npm run smoke
 ```
 
-## CLI
+Run without installing globally:
 
-```bash
-configdiff <env-a> [env-b] [--format json|table] [--severity low|medium|high]
+```sh
+npx configdiff .env.dev .env.prod
 ```
 
-Or without installing globally:
+## CLI Usage
 
-```bash
-node dist/cli.js fixtures/env-matching.dev.env fixtures/env-matching.prod.env
+Compare two files:
+
+```sh
+configdiff fixtures/env-base.env fixtures/env-missing.prod.env
 ```
 
-## Supported formats
+Compare multiple environments against a base file:
 
-- `.env` (dotenv)
-- `.json`
-- `.yaml` / `.yml`
-- `.ini`
+```sh
+configdiff --base fixtures/env-base.env --compare fixtures/env-missing.dev.env,fixtures/env-missing.prod.env
+```
+
+Choose an output format:
+
+```sh
+configdiff fixtures/config-dev.yaml fixtures/config-prod.yaml --format markdown
+configdiff fixtures/config-dev.json fixtures/config-prod.json --format json
+```
+
+Ignore keys that are expected to differ:
+
+```sh
+configdiff .env.dev .env.prod --ignore-keys DB_HOST,API_KEY
+```
+
+Generate JSON Patch-style operations for automation:
+
+```sh
+configdiff .env .env.prod --json-patch
+```
+
+## Supported Formats
+
+- `.env`: `KEY=VALUE` lines, `export` prefixes, quoted values, and comments.
+- `.json`: standard JSON objects with nested keys flattened to dot paths.
+- `.yaml` and `.yml`: YAML mappings with nested keys flattened to dot paths.
+- `.ini`, `.cfg`, and `.conf`: INI sections with keys prefixed by section name.
+
+## Library API
+
+```js
+import { parseConfig, compareBase, formatMarkdown } from "configdiff";
+
+const base = parseConfig("fixtures/env-base.env");
+const prod = parseConfig("fixtures/env-missing.prod.env");
+const results = compareBase("base", base, ["prod"], [prod]);
+
+console.log(formatMarkdown(results));
+```
+
+## Exit Codes
+
+- `0`: no drift found.
+- `1`: drift detected and printed.
+- `2`: invalid input, missing file, parse error, or bad arguments.
 
 ## Verify
 
-Run local verification before opening a PR or publishing:
-
-```bash
-npm test
+```sh
+npm run build
+npm run check
+npm run smoke
+npm run package:smoke
 npm run release:check
 ```
 
-`release:check` runs lint, tests, smoke verification, and build to ensure everything ships cleanly.
-
 ## License
 
-MIT © Roger Chappel
+MIT
 
 ## Development
 
 Run the same checks locally before opening a PR:
 
-- `npm run check` - npm run lint && npm test
-- `npm run lint` - tsc --noEmit
-- `npm run build` - tsup
-- `npm test` - node --test dist/test/*.test.js
-- `npm run smoke` - node dist/cli.js fixtures/env-matching.dev.env fixtures/env-matching.prod.env && echo 'smoke OK'
-- `npm run package:smoke` - npm run build && npm pack --dry-run
-- `npm run release:check` - npm run lint && npm test && npm run smoke && npm run build && npm pack --dry-run
+- `npm run check` - `npm run lint && npm test`
+- `npm run lint` - `tsc --noEmit`
+- `npm run build` - `tsup`
+- `npm test` - `node --test dist/test/*.test.js`
+- `npm run smoke` - `node dist/cli.js fixtures/env-matching.dev.env fixtures/env-matching.prod-copy.env && echo 'smoke OK'`
+- `npm run package:smoke` - `npm run build && npm pack --dry-run`
+- `npm run release:check` - build, check, smoke, and package dry-run

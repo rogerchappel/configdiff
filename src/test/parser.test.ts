@@ -1,7 +1,7 @@
 import { describe, test } from 'node:test'
 import assert from 'node:assert/strict'
-import { parseConfig, parseConfigContent, detectFormat } from '../../parser.js'
-import * as nodePath from 'node:path'
+import { parseConfig, parseConfigContent, detectFormat } from '../parser.js'
+import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const FIXTURES = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../fixtures')
