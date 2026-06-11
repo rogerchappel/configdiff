@@ -86,3 +86,15 @@ npm run release:check
 ## License
 
 MIT
+
+## Development
+
+Run the same checks locally before opening a PR:
+
+- `npm run check` - `npm run lint && npm test`
+- `npm run lint` - `tsc --noEmit`
+- `npm run build` - `tsup`
+- `npm test` - `node --test dist/test/*.test.js`
+- `npm run smoke` - `node dist/cli.js fixtures/env-matching.dev.env fixtures/env-matching.prod-copy.env && echo 'smoke OK'`
+- `npm run package:smoke` - `npm run build && npm pack --dry-run`
+- `npm run release:check` - build, check, smoke, and package dry-run
