@@ -1,19 +1,73 @@
-name: CI
+name: Docs
 
 on:
-  push:
-    branches: [main]
   pull_request:
-    branches: [main]
+    paths:
+      - '**/*.md'
+      - 'docs/**'
+      - '.github/workflows/docs.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - '**/*.md'
+      - 'docs/**'
+      - '.github/workflows/docs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
-  verify:
+  docs-hygiene:
+    name: Docs hygiene
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
-      - run: npm ci
-      - run: npm run release:check
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run release checks
+        run: npm run release:check
+
+      - name: Validate docs directory
+        run: |
+          set -euo pipefail
+
+          test -d docs
+          test -s docs/PRD.md
+
+      - name: Validate markdown paths
+        run: |
+          set -euo pipefail
+
+          find . -type f -name '*.md' -not -path './.git/*' -print | sort > markdown-files.txt
+          test -s markdown-files.txt
+
+          while IFS= read -r file; do
+            test -s "$file"
+          done < markdown-files.txt
+
+      - name: Validate docs inventory
+        run: |
+          set -euo pipefail
+
+          required_docs=(
+            docs/PRD.md
+            docs/agent-workflow.md
+            docs/release-process.md
+            docs/security-policy.md
+          )
+
+          for doc in "${required_docs[@]}"; do
+            test -s "$doc"
+          done
