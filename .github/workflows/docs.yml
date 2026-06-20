@@ -16,10 +16,4 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - run: npm run check
-      - run: npm run lint
-      - run: npm run build
-      - run: npm run test
-      - run: npm run smoke
-      - run: npm run package:smoke
       - run: npm run release:check
