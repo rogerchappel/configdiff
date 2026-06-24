@@ -83,6 +83,10 @@ npm run package:smoke
 npm run release:check
 ```
 
+## Safety and Limitations
+
+configdiff reads local configuration files and prints key/value differences, so review output before pasting it into tickets, pull requests, or chat systems. Use --ignore-keys for expected environment-specific secrets, and treat parse errors or unsupported file shapes as prompts for manual review rather than proof that two environments are aligned.
+
 ## License
 
 MIT
