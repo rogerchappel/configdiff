@@ -13,6 +13,9 @@
   },
   "files": [
     "dist",
+    "docs",
+    "examples",
+    "fixtures",
     "README.md",
     "LICENSE",
     "SECURITY.md",

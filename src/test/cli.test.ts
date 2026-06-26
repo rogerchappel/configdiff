@@ -34,6 +34,25 @@ describe('CLI --help', () => {
   })
 })
 
+describe('package release contents', () => {
+  test('allowlist keeps README examples and docs available in npm tarballs', () => {
+    const pkg = JSON.parse(
+      execFileSync('node', ['-e', "process.stdout.write(JSON.stringify(require('./package.json')))"], {
+        cwd: path.join(path.dirname(fileURLToPath(import.meta.url)), '../..'),
+        encoding: 'utf-8',
+      }),
+    )
+    const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '../..')
+
+    assert.ok(pkg.files.includes('fixtures'))
+    assert.ok(pkg.files.includes('docs'))
+    assert.ok(pkg.files.includes('examples'))
+    assert.ok(execFileSync('test', ['-f', path.join(root, 'fixtures/env-base.env')], { encoding: 'utf-8' }) === '')
+    assert.ok(execFileSync('test', ['-f', path.join(root, 'docs/release-checklist.md')], { encoding: 'utf-8' }) === '')
+    assert.ok(execFileSync('test', ['-f', path.join(root, 'examples/cli-tooling/README.md')], { encoding: 'utf-8' }) === '')
+  })
+})
+
 describe('CLI --version', () => {
   test('shows version and exits 0', () => {
     const result = run(['--version'])
