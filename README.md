@@ -48,6 +48,17 @@ Generate JSON Patch-style operations for automation:
 configdiff .env .env.prod --json-patch
 ```
 
+Run the checked-in drift demo:
+
+```sh
+bash demo/run-config-drift-demo.sh
+```
+
+The demo builds the CLI, compares the fixture configs, writes Markdown, JSON,
+and JSON Patch-style artifacts to a temporary directory, and verifies that drift
+is reported with the expected non-zero exit code. A short recording outline is
+available in [docs/promo/config-drift-demo.md](docs/promo/config-drift-demo.md).
+
 ## Supported Formats
 
 - `.env`: `KEY=VALUE` lines, `export` prefixes, quoted values, and comments.
