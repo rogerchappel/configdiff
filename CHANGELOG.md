@@ -14,6 +14,8 @@ format and uses semantic versioning when versioned releases are published.
   checks.
 - Example generated repository shapes for minimal libraries, CLI tooling, and
   docs-only projects.
+- Packaged fixtures, docs, and examples so README commands and release-audit
+  assets are available from npm tarballs.
 - Optional generated repository README template.
 - Reusable agent prompt library for common OSS maintenance tasks.
 
