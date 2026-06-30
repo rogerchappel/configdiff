@@ -2,6 +2,20 @@
 
 Find configuration drift across environments. `configdiff` compares `.env`, JSON, YAML, and INI-style files, then reports missing keys, changed values, and severity-ranked differences for release and operations review.
 
+
+## Quickstart
+
+Run the tool from a fresh checkout:
+
+```sh
+npm install
+npm run build
+node dist/cli.js --help
+npm test
+```
+
+The help command is a quick smoke test for the CLI entrypoint, and `npm test` runs the committed regression suite before you depend on the output.
+
 ## Install
 
 ```sh
